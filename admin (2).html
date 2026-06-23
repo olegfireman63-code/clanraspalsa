@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Админ-панель — загрузка файла</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        .card {
+            background: white;
+            max-width: 580px;
+            width: 100%;
+            border-radius: 2.5rem;
+            padding: 2.5rem 2rem 2.8rem;
+            box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+        .card-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #0b1b33;
+        }
+        .badge {
+            background: #dc2626;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.2rem 0.8rem;
+            border-radius: 3rem;
+            letter-spacing: 0.3px;
+        }
+        .sub {
+            color: #475569;
+            margin-bottom: 1.8rem;
+            border-left: 4px solid #3b82f6;
+            padding-left: 0.8rem;
+        }
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 1.5rem;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            background: #f8fafc;
+            transition: 0.2s;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+        }
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background: #f1f5f9;
+        }
+        .upload-area .icon {
+            font-size: 3rem;
+            display: block;
+        }
+        .upload-area p {
+            color: #334155;
+            font-weight: 500;
+            margin-top: 0.3rem;
+        }
+        .upload-area .hint {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        .file-preview {
+            background: #f1f5f9;
+            border-radius: 1.2rem;
+            padding: 1rem 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 1.5rem;
+        }
+        .file-preview .info {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .file-preview .info .name {
+            font-weight: 600;
+            color: #0f172a;
+            word-break: break-all;
+        }
+        .file-preview .info .size {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        .file-preview .remove {
+            background: #fee2e2;
+            color: #b91c1c;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 3rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.1s;
+            font-size: 0.8rem;
+        }
+        .file-preview .remove:hover {
+            background: #fecaca;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 3rem;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.15s;
+            width: 100%;
+            box-shadow: 0 6px 14px -4px rgba(59, 130, 246, 0.35);
+        }
+        .btn:hover {
+            background: #2563eb;
+            transform: scale(0.97);
+        }
+        .btn:active {
+            background: #1d4ed8;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .btn-success {
+            background: #059669;
+            box-shadow: 0 6px 14px -4px rgba(5, 150, 105, 0.35);
+        }
+        .btn-success:hover {
+            background: #047857;
+        }
+        .btn-danger {
+            background: #dc2626;
+            box-shadow: 0 6px 14px -4px rgba(220, 38, 38, 0.3);
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #94a3b8;
+            color: #1e293b;
+            box-shadow: none;
+            margin-top: 0.6rem;
+        }
+        .btn-outline:hover {
+            background: #e2e8f0;
+            border-color: #64748b;
+            transform: none;
+        }
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-top: 1.2rem;
+        }
+        .status {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #16a34a;
+            min-height: 1.5rem;
+            text-align: center;
+        }
+        .status.error {
+            color: #dc2626;
+        }
+        .status.loading {
+            color: #2563eb;
+        }
+        .admin-footer {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 1.2rem;
+        }
+        .admin-footer a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .admin-footer a:hover {
+            text-decoration: underline;
+        }
+        .hidden {
+            display: none !important;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 3rem;
+            margin-top: 0.8rem;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar .fill {
+            height: 100%;
+            background: #3b82f6;
+            width: 0%;
+            transition: width 0.3s;
+            border-radius: 3rem;
+        }
+        .progress-bar.active {
+            display: block;
+        }
+        @media (max-width: 480px) {
+            .card { padding: 1.8rem 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="card-header">
+        <h1>⚙️ Админ-панель</h1>
+        <span class="badge">защищено</span>
+    </div>
+    <p class="sub">Загрузите любой файл (.exe, .py, .bat, .pdf, .jpg ...) — без ограничений по размеру!</p>
+
+    <!-- Область загрузки -->
+    <div class="upload-area" id="uploadArea">
+        <span class="icon">📤</span>
+        <p>Нажмите или перетащите файл</p>
+        <span class="hint">Поддерживаются файлы любого размера</span>
+    </div>
+
+    <!-- Скрытый input для выбора файла -->
+    <input type="file" id="fileInput" />
+
+    <!-- Информация о загруженном файле (предпросмотр) -->
+    <div id="filePreview" class="file-preview hidden">
+        <div class="info">
+            <span style="font-size:1.5rem;">📄</span>
+            <div>
+                <div class="name" id="previewName">file.exe</div>
+                <div class="size" id="previewSize">0 KB</div>
+            </div>
+        </div>
+        <button class="remove" id="removeFileBtn">✕ удалить</button>
+    </div>
+
+    <div class="progress-bar" id="progressBar">
+        <div class="fill" id="progressFill"></div>
+    </div>
+
+    <div class="actions">
+        <button id="uploadBtn" class="btn btn-success">📤 Загрузить на сайт</button>
+        <button id="clearBtn" class="btn btn-danger">🗑️ Удалить файл</button>
+        <a href="index.html" class="btn btn-outline" style="text-align:center; text-decoration:none;">← На главную</a>
+    </div>
+
+    <div id="statusMessage" class="status">Готов к загрузке</div>
+
+    <div class="admin-footer">
+        <span>💾 Файл хранится в IndexedDB • </span>
+        <a href="index.html">вернуться на главную</a>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // === Работа с IndexedDB ===
+        const DB_NAME = 'FileStorageDB';
+        const STORE_NAME = 'files';
+        const DB_VERSION = 1;
+
+        let db = null;
+        let selectedFile = null;
+
+        // --- Открыть/создать БД ---
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = function(e) {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = function(e) {
+                    db = e.target.result;
+                    resolve(db);
+                };
+                request.onerror = function(e) {
+                    reject(new Error('Ошибка открытия базы данных'));
+                };
+            });
+        }
+
+        // --- Сохранить файл в БД ---
+        function saveFileToDB(file) {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject(new Error('База данных не открыта'));
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const blob = e.target.result;
+                        const fileData = {
+                            id: 'currentFile',
+                            name: file.name,
+                            size: file.size,
+                            type: file.type || 'application/octet-stream',
+                            lastModified: file.lastModified,
+                            blob: blob
+                        };
+
+                        const transaction = db.transaction([STORE_NAME], 'readwrite');
+                        const store = transaction.objectStore(STORE_NAME);
+                        const request = store.put(fileData);
+                        request.onsuccess = function() {
+                            resolve(fileData);
+                        };
+                        request.onerror = function() {
+                            reject(new Error('Ошибка сохранения файла'));
+                        };
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                reader.onerror = function() {
+                    reject(new Error('Ошибка чтения файла'));
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // --- Получить файл из БД ---
+        function getFileFromDB() {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject(new Error('База данных не открыта'));
+                    return;
+                }
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.get('currentFile');
+                request.onsuccess = function() {
+                    resolve(request.result || null);
+                };
+                request.onerror = function() {
+                    reject(new Error('Ошибка чтения файла'));
+                };
+            });
+        }
+
+        // --- Удалить файл из БД ---
+        function deleteFileFromDB() {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject(new Error('База данных не открыта'));
+                    return;
+                }
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.delete('currentFile');
+                request.onsuccess = function() {
+                    resolve();
+                };
+                request.onerror = function() {
+                    reject(new Error('Ошибка удаления файла'));
+                };
+            });
+        }
+
+        // --- Обновить UI ---
+        function updateUI(fileData) {
+            const filePreview = document.getElementById('filePreview');
+            const previewName = document.getElementById('previewName');
+            const previewSize = document.getElementById('previewSize');
+            const statusMsg = document.getElementById('statusMessage');
+
+            if (fileData && fileData.name) {
+                previewName.textContent = fileData.name;
+                previewSize.textContent = formatSize(fileData.size);
+                filePreview.classList.remove('hidden');
+                statusMsg.textContent = '✅ Файл загружен: ' + fileData.name;
+                statusMsg.className = 'status';
+                document.getElementById('uploadBtn').disabled = false;
+            } else {
+                filePreview.classList.add('hidden');
+                statusMsg.textContent = '⚠️ Файл не загружен';
+                statusMsg.className = 'status error';
+                document.getElementById('uploadBtn').disabled = true;
+            }
+        }
+
+        // --- Форматирование размера ---
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // --- Показать статус ---
+        function setStatus(text, isError = false, isLoading = false) {
+            const statusMsg = document.getElementById('statusMessage');
+            statusMsg.textContent = text;
+            if (isError) {
+                statusMsg.className = 'status error';
+            } else if (isLoading) {
+                statusMsg.className = 'status loading';
+            } else {
+                statusMsg.className = 'status';
+            }
+        }
+
+        // --- Загрузить файл ---
+        async function uploadFile() {
+            if (!selectedFile) {
+                setStatus('❌ Сначала выберите файл', true);
+                return;
+            }
+
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            const uploadBtn = document.getElementById('uploadBtn');
+
+            try {
+                uploadBtn.disabled = true;
+                progressBar.classList.add('active');
+                progressFill.style.width = '0%';
+                setStatus('⏳ Загрузка файла...', false, true);
+
+                // Имитация прогресса
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 15;
+                    if (progress >= 90) {
+                        progress = 90;
+                        clearInterval(interval);
+                    }
+                    progressFill.style.width = progress + '%';
+                }, 100);
+
+                const fileData = await saveFileToDB(selectedFile);
+                
+                clearInterval(interval);
+                progressFill.style.width = '100%';
+                
+                setTimeout(() => {
+                    progressBar.classList.remove('active');
+                    progressFill.style.width = '0%';
+                }, 500);
+
+                updateUI(fileData);
+                setStatus('✅ Файл "' + selectedFile.name + '" успешно загружен!');
+                
+                // Сигнал для других вкладок
+                localStorage.setItem('fileUploaded', Date.now().toString());
+                
+                // Очищаем выбранный файл
+                selectedFile = null;
+                document.getElementById('fileInput').value = '';
+
+            } catch (err) {
+                setStatus('❌ Ошибка загрузки: ' + err.message, true);
+                progressBar.classList.remove('active');
+                progressFill.style.width = '0%';
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        }
+
+        // --- Удалить файл ---
+        async function deleteFile() {
+            try {
+                await deleteFileFromDB();
+                updateUI(null);
+                setStatus('🗑️ Файл удалён', true);
+                selectedFile = null;
+                document.getElementById('fileInput').value = '';
+                localStorage.setItem('fileUploaded', Date.now().toString());
+            } catch (err) {
+                setStatus('❌ Ошибка удаления: ' + err.message, true);
+            }
+        }
+
+        // --- Обработчик выбора файла ---
+        function handleFileSelect(file) {
+            if (!file) {
+                setStatus('❌ Файл не выбран', true);
+                return;
+            }
+            selectedFile = file;
+            document.getElementById('previewName').textContent = file.name;
+            document.getElementById('previewSize').textContent = formatSize(file.size);
+            document.getElementById('filePreview').classList.remove('hidden');
+            document.getElementById('uploadBtn').disabled = false;
+            setStatus('📎 Выбран: ' + file.name + ' (' + formatSize(file.size) + ')');
+        }
+
+        // --- Инициализация ---
+        async function init() {
+            try {
+                await openDB();
+                
+                // Проверяем наличие файла
+                const fileData = await getFileFromDB();
+                updateUI(fileData);
+
+                // --- Обработчики событий ---
+
+                // Клик по области загрузки
+                document.getElementById('uploadArea').addEventListener('click', function() {
+                    document.getElementById('fileInput').click();
+                });
+
+                // Выбор файла
+                document.getElementById('fileInput').addEventListener('change', function(e) {
+                    if (this.files && this.files.length > 0) {
+                        handleFileSelect(this.files[0]);
+                    }
+                });
+
+                // Drag & Drop
+                const uploadArea = document.getElementById('uploadArea');
+                uploadArea.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    this.style.borderColor = '#3b82f6';
+                    this.style.background = '#eef2ff';
+                });
+                uploadArea.addEventListener('dragleave', function(e) {
+                    e.preventDefault();
+                    this.style.borderColor = '#cbd5e1';
+                    this.style.background = '#f8fafc';
+                });
+                uploadArea.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    this.style.borderColor = '#cbd5e1';
+                    this.style.background = '#f8fafc';
+                    const files = e.dataTransfer.files;
+                    if (files && files.length > 0) {
+                        handleFileSelect(files[0]);
+                        document.getElementById('fileInput').files = files;
+                    }
+                });
+
+                // Кнопка загрузки
+                document.getElementById('uploadBtn').addEventListener('click', uploadFile);
+
+                // Кнопка удаления
+                document.getElementById('clearBtn').addEventListener('click', deleteFile);
+
+                // Кнопка удаления из предпросмотра
+                document.getElementById('removeFileBtn').addEventListener('click', deleteFile);
+
+                // Обновление при фокусе
+                window.addEventListener('focus', async function() {
+                    const data = await getFileFromDB();
+                    updateUI(data);
+                });
+
+                // Слушаем изменения в других вкладках
+                window.addEventListener('storage', function(e) {
+                    if (e.key === 'fileUploaded') {
+                        getFileFromDB().then(data => updateUI(data));
+                    }
+                });
+
+            } catch (err) {
+                setStatus('❌ Ошибка инициализации: ' + err.message, true);
+            }
+        }
+
+        // Запуск
+        init();
+    })();
+</script>
+
+</body>
+</html>

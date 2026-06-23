@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Скачать файл</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #f0f4f8 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        .card {
+            background: white;
+            max-width: 520px;
+            width: 100%;
+            border-radius: 2.5rem;
+            padding: 2.5rem 2rem 2.8rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transition: 0.2s;
+            text-align: center;
+        }
+        .icon-big {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #0b1b33;
+            margin-bottom: 0.3rem;
+        }
+        .sub {
+            color: #475569;
+            font-size: 0.95rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 1.5rem;
+            margin-bottom: 1.8rem;
+        }
+        .file-info {
+            background: #f8fafc;
+            border-radius: 1.5rem;
+            padding: 1.2rem 1.5rem;
+            border: 2px dashed #cbd5e1;
+            margin-bottom: 2rem;
+        }
+        .file-info .label {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .file-info .filename {
+            background: white;
+            padding: 0.6rem 1rem;
+            border-radius: 1rem;
+            margin-top: 0.5rem;
+            font-family: 'Menlo', monospace;
+            font-size: 0.9rem;
+            color: #0f172a;
+            border: 1px solid #e2e8f0;
+            word-break: break-all;
+        }
+        .file-info .size {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 0.4rem;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.9rem 2.5rem;
+            border-radius: 3rem;
+            font-weight: 600;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 6px 14px -4px rgba(59, 130, 246, 0.4);
+            width: 100%;
+            text-decoration: none;
+        }
+        .btn:hover {
+            background: #2563eb;
+            transform: scale(0.97);
+            box-shadow: 0 4px 8px -2px rgba(59, 130, 246, 0.5);
+        }
+        .btn:active {
+            background: #1d4ed8;
+        }
+        .btn-secondary {
+            background: #1e293b;
+            box-shadow: 0 6px 14px -4px rgba(15, 23, 42, 0.3);
+            margin-top: 0.8rem;
+            font-weight: 500;
+        }
+        .btn-secondary:hover {
+            background: #0f172a;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .admin-link {
+            margin-top: 2rem;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        .admin-link a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .admin-link a:hover {
+            text-decoration: underline;
+        }
+        .status {
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            min-height: 1.5rem;
+            color: #16a34a;
+        }
+        .status.error {
+            color: #dc2626;
+        }
+        .status.loading {
+            color: #2563eb;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3rem;
+            margin-top: 0.8rem;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar .fill {
+            height: 100%;
+            background: #3b82f6;
+            width: 0%;
+            transition: width 0.3s;
+            border-radius: 3rem;
+        }
+        .progress-bar.active {
+            display: block;
+        }
+        @media (max-width: 480px) {
+            .card { padding: 1.8rem 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <span class="icon-big">📦</span>
+    <h1>Скачать файл</h1>
+    <p class="sub">Файл загружен администратором</p>
+
+    <div class="file-info" id="fileInfo">
+        <div class="label">📄 Текущий файл</div>
+        <div class="filename" id="fileNameDisplay">файл не загружен</div>
+        <div class="size" id="fileSizeDisplay">загрузите через админ-панель</div>
+    </div>
+
+    <button id="downloadBtn" class="btn" disabled>
+        ⬇️ Скачать файл
+    </button>
+
+    <a href="admin.html" class="btn btn-secondary" style="display:block; text-align:center; margin-top:0.8rem;">
+        ⚙️ Админ-панель
+    </a>
+
+    <div id="statusMessage" class="status">⏳ Проверка файла...</div>
+    <div class="progress-bar" id="progressBar">
+        <div class="fill" id="progressFill"></div>
+    </div>
+
+    <div class="admin-link">
+        <span>🔐 </span><a href="admin.html">перейти в админ-панель</a>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // === Работа с IndexedDB ===
+        const DB_NAME = 'FileStorageDB';
+        const STORE_NAME = 'files';
+        const DB_VERSION = 1;
+
+        let db = null;
+
+        // --- Открыть/создать БД ---
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = function(e) {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = function(e) {
+                    db = e.target.result;
+                    resolve(db);
+                };
+                request.onerror = function(e) {
+                    reject(new Error('Ошибка открытия базы данных'));
+                };
+            });
+        }
+
+        // --- Получить файл из БД ---
+        function getFileFromDB() {
+            return new Promise((resolve, reject) => {
+                if (!db) {
+                    reject(new Error('База данных не открыта'));
+                    return;
+                }
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.get('currentFile');
+                request.onsuccess = function() {
+                    resolve(request.result || null);
+                };
+                request.onerror = function() {
+                    reject(new Error('Ошибка чтения файла'));
+                };
+            });
+        }
+
+        // --- Обновить UI ---
+        function updateUI(fileData) {
+            const fileNameDisplay = document.getElementById('fileNameDisplay');
+            const fileSizeDisplay = document.getElementById('fileSizeDisplay');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const statusMsg = document.getElementById('statusMessage');
+
+            if (fileData && fileData.name) {
+                fileNameDisplay.textContent = fileData.name;
+                fileSizeDisplay.textContent = 'размер: ' + formatSize(fileData.size);
+                downloadBtn.disabled = false;
+                statusMsg.textContent = '✅ Файл готов к скачиванию';
+                statusMsg.className = 'status';
+            } else {
+                fileNameDisplay.textContent = 'файл не загружен';
+                fileSizeDisplay.textContent = 'загрузите через админ-панель';
+                downloadBtn.disabled = true;
+                statusMsg.textContent = '⚠️ Файл отсутствует';
+                statusMsg.className = 'status error';
+            }
+        }
+
+        // --- Форматирование размера ---
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // --- Скачивание файла ---
+        async function downloadFile() {
+            const statusMsg = document.getElementById('statusMessage');
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+
+            try {
+                const fileData = await getFileFromDB();
+                if (!fileData) {
+                    statusMsg.textContent = '❌ Файл не найден';
+                    statusMsg.className = 'status error';
+                    return;
+                }
+
+                // Показываем прогресс
+                progressBar.classList.add('active');
+                progressFill.style.width = '0%';
+                statusMsg.textContent = '⏳ Подготовка к скачиванию...';
+                statusMsg.className = 'status loading';
+
+                // Получаем blob из базы
+                const blob = fileData.blob;
+                const url = URL.createObjectURL(blob);
+                
+                // Имитация прогресса (для больших файлов)
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 10;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                    }
+                    progressFill.style.width = progress + '%';
+                }, 100);
+
+                // Создаём ссылку для скачивания
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileData.name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Завершаем
+                clearInterval(interval);
+                progressFill.style.width = '100%';
+                setTimeout(() => {
+                    progressBar.classList.remove('active');
+                    progressFill.style.width = '0%';
+                }, 500);
+
+                URL.revokeObjectURL(url);
+                statusMsg.textContent = '✅ Скачивание началось: ' + fileData.name;
+                statusMsg.className = 'status';
+
+            } catch (err) {
+                statusMsg.textContent = '❌ Ошибка: ' + err.message;
+                statusMsg.className = 'status error';
+                progressBar.classList.remove('active');
+                progressFill.style.width = '0%';
+            }
+        }
+
+        // --- Инициализация ---
+        async function init() {
+            try {
+                await openDB();
+                const fileData = await getFileFromDB();
+                updateUI(fileData);
+
+                // Обработчик скачивания
+                document.getElementById('downloadBtn').addEventListener('click', downloadFile);
+
+                // Обновление при фокусе
+                window.addEventListener('focus', async function() {
+                    const data = await getFileFromDB();
+                    updateUI(data);
+                });
+
+                // Слушаем изменения в других вкладках
+                window.addEventListener('storage', function(e) {
+                    if (e.key === 'fileUploaded') {
+                        // Сигнал, что файл обновлён
+                        getFileFromDB().then(data => updateUI(data));
+                    }
+                });
+
+            } catch (err) {
+                document.getElementById('statusMessage').textContent = '❌ Ошибка инициализации: ' + err.message;
+                document.getElementById('statusMessage').className = 'status error';
+            }
+        }
+
+        // Запуск
+        init();
+    })();
+</script>
+
+</body>
+</html>
